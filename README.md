@@ -25,7 +25,7 @@ This is a simple to-do application built with Node.js, Express and MySQL. The ap
                          ```
 
 ## API Endpoints 
-If you are using Postman to test this API, you can use the following endpoints:
+Use the following endpoints:
   - **POST /lists** : Create a new to-do list.
   - **DELETE /lists/:listId** : Delete a to-do list by its ID.
   - **POST /lists/:listId/items** : Insert a new item into a to-do list. 
