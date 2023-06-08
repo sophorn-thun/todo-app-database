@@ -3,7 +3,7 @@
 This is a simple to-do application built with Node.js, Express and MySQL. The application allows you to interact with SQL database and implement CRUD operation with respective routes.
 
 ## Setup
-1. You need to clone this repository: git@github.com:sophorn-thun/todo-app-database.git 
+1. You need to clone this repository: $git clone git@github.com:sophorn-thun/todo-app-database.git 
 2. In terminal, install: 
                         $npm install mysql2
                         $npm install express
