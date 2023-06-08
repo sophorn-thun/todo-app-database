@@ -11,6 +11,7 @@ This is a simple to-do application built with Node.js, Express and MySQL. The ap
                         ```
                         $npm install mysql2
                         $npm install express
+                        $npm install dotenv
                         ```
 3. Setup database: import todo.app.sql and update .env file with your database credentials:
                         ```
