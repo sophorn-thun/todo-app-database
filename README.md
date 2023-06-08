@@ -12,12 +12,12 @@ This is a simple to-do application built with Node.js, Express and MySQL. The ap
                         $npm install mysql2
                         $npm install express
                         ```
-3. Setup database: import todo.app.sql and update .env file with your database credentials
+3. Setup database: import todo.app.sql and update .env file with your database credentials:
                         ```
-                         **MYSQL_HOST**=<your-database-host>
-                         **MYSQL_USER**=<your-database-username>
-                         **MYSQL_PASSWORD**=<your-database-password>
-                         **MYSQL_DATABASE**=<your-database-name>
+                         MYSQL_HOST=<your-database-host>
+                         MYSQL_USER=<your-database-username>
+                         MYSQL_PASSWORD=<your-database-password>
+                         MYSQL_DATABASE=<your-database-name>
                          ```
 4. Start runing:         
                          ```
