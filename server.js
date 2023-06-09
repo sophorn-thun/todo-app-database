@@ -7,29 +7,40 @@ const app = express();
 app.use(express.json());
 
 // Connect to the ToDo App database
+let connectionPool;
+
 async function getConnection() {
-  try {
-    const connection = await mysql.createConnection({
+  if (!connectionPool) {
+    connectionPool = mysql.createPool({
       host: process.env.MYSQL_HOST,
       user: process.env.MYSQL_USER,
       password: process.env.MYSQL_PASSWORD,
-      database: process.env.MYSQL_DATABASE
+      database: process.env.MYSQL_DATABASE,
+      connectionLimit: 20,
     });
-    console.log('Connected to the database successfully');
+    console.log('Connection pool created');
+  }
+  try {
+    const connection = await connectionPool.getConnection();
+    console.log('Connection acquired from the pool');
     return connection;
   } catch (error) {
-    console.log('Errors occurred when connecting to the database:', error);
+    console.log('Errors occurred when acquiring a connection from the pool:', error);
     throw error;
   }
 }
 
+
 // Create new todo_list
-app.post('/lists', async (req, res) => {
+app.post('/:userId/lists', async (req, res) => {
   try {
+    const { userId } = req.params;
     const { listName, completionStatus, dueDate } = req.body;
     const connection = await getConnection();
-    const [result] = await connection.execute('INSERT INTO todo_list (list_name, completion_status, due_date) VALUES (?, ?, ?)', [listName, completionStatus, dueDate]);
+    
+    const [result] = await connection.execute('INSERT INTO todo_list (user_id, list_name, completion_status, due_date) VALUES (?, ?, ?, ?)', [userId, listName, completionStatus, dueDate]);
     const newListId = result.insertId;
+    
     console.log('New to-do list created successfully');
     res.status(201).json({ newListId });
   } catch (error) {
@@ -38,12 +49,14 @@ app.post('/lists', async (req, res) => {
   }
 });
 
+
 // Delete todo_list
-app.delete('/lists/:listId', async (req, res) => {
+app.delete('/:userId/:listId', async (req, res) => {
   try {
-    const { listId } = req.params;
+    const { userId, listId } = req.params;
     const connection = await getConnection();
-    const [result] = await connection.execute('DELETE FROM todo_list WHERE list_id = ?', [listId]);
+
+    const [result] = await connection.execute('DELETE FROM todo_list WHERE user_id = ? AND list_id = ?', [userId, listId]);
     console.log('To-do list deleted successfully');
     res.status(200).json({ result });
   } catch (error) {
@@ -53,12 +66,13 @@ app.delete('/lists/:listId', async (req, res) => {
 });
 
 // Insert todo_item
-app.post('/lists/:listId/items', async (req, res) => {
+app.post('/:userId/:listId/items', async (req, res) => {
   try {
-    const { listId } = req.params;
+    const { userId, listId } = req.params;
     const { completionStatus, dueDate, description } = req.body;
     const connection = await getConnection();
-    const [result] = await connection.execute('INSERT INTO todo_item (list_id, completion_status, due_date, description) VALUES (?, ?, ?, ?)', [listId, completionStatus, dueDate, description]);
+    
+    const [result] = await connection.execute('INSERT INTO todo_item (user_id, list_id, completion_status, due_date, description) VALUES (?, ?, ?, ?, ?)', [userId, listId, completionStatus, dueDate, description]);
     const newItemId = result.insertId;
     console.log('New todo_item created successfully');
     res.status(201).json({ newItemId });
@@ -70,11 +84,12 @@ app.post('/lists/:listId/items', async (req, res) => {
 
 
 // Delete todo_item
-app.delete('/lists/:listId/:itemId', async (req, res) => {
+app.delete('/:userId/:listId/:itemId', async (req, res) => {
   try {
-    const { itemId } = req.params;
+    const { userId, listId, itemId } = req.params;
     const connection = await getConnection();
-    const [result] = await connection.execute('DELETE FROM todo_item WHERE todo_id = ?', [itemId]);
+    
+    const [result] = await connection.execute('DELETE FROM todo_item WHERE user_id = ? AND list_id = ? AND todo_id = ?', [userId, listId, itemId]);
     console.log('Todo_item deleted successfully');
     res.status(200).json({ result });
   } catch (error) {
@@ -84,12 +99,14 @@ app.delete('/lists/:listId/:itemId', async (req, res) => {
 });
 
 // Update item status
-app.put('/lists/completion/:listId/:itemId', async (req, res) => {
+app.put('/:userId/:listId/item/:itemId', async (req, res) => {
   try {
-    const { itemId } = req.params;
+    const { userId, listId, itemId } = req.params;
     const { completionStatus } = req.body;
     const connection = await getConnection();
-    const [result] = await connection.execute('UPDATE todo_item SET completion_status = ? WHERE todo_id = ?', [completionStatus, itemId]);
+    const updatedCompletionStatus = completionStatus || null;
+    
+    const [result] = await connection.execute('UPDATE todo_item SET completion_status = ? WHERE user_id = ? AND list_id = ? AND todo_id = ?', [updatedCompletionStatus, userId, listId, itemId]);
     console.log('Item status updated successfully');
     res.status(200).json({ result });
   } catch (error) {
@@ -99,12 +116,14 @@ app.put('/lists/completion/:listId/:itemId', async (req, res) => {
 });
 
 // Add reminder to the list
-app.put('/lists/reminder/:listId', async (req, res) => {
+app.put('/:userId/list/:listId/reminder', async (req, res) => {
   try {
-    const { listId } = req.params;
+    const { userId, listId } = req.params;
     const { dueDate } = req.body;
     const connection = await getConnection();
-    const [result] = await connection.execute('UPDATE todo_list SET due_date = ? WHERE list_id = ?', [dueDate, listId]);
+    const updatedDueDate = dueDate || null;
+    
+    const [result] = await connection.execute('UPDATE todo_list SET due_date = ? WHERE user_id = ? AND list_id = ?', [updatedDueDate, userId, listId]);
     console.log('Reminder added to the list successfully');
     res.status(200).json({ result });
   } catch (error) {
