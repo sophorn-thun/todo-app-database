@@ -27,9 +27,9 @@ This is a simple to-do application built with Node.js, Express and MySQL. The ap
 
 ## API Endpoints 
 Use the following endpoints:
-  - **POST /lists** : Create a new to-do list.
-  - **DELETE /lists/:listId** : Delete a to-do list by its ID.
-  - **POST /lists/:listId/items** : Insert a new item into a to-do list. 
-  - **DELETE /lists/:listId/:itemId** : Delete an item from a to-do list by its ID.
-  - **PUT /lists/completion/:listId/:itemId** : Update the completion status of an item.
-  - **PUT /lists/reminder/:listId** : Add a reminder to a to-do list.
+  - **POST /:userId/lists** : Create a new to-do list.
+  - **DELETE /:userId/:listId** : Delete a to-do list by its ID.
+  - **POST /:userId/:listId/items** : Insert a new item into a to-do list. 
+  - **DELETE /:userId/:listId/:itemId** : Delete an item from a to-do list by its ID.
+  - **PUT /:userId/:listId/item/:itemId** : Update the completion status of an item.
+  - **PUT /:userId/list/:listId/reminder** : Add a reminder to a to-do list.
