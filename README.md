@@ -31,9 +31,9 @@ $npm install dotenv
 
 ## API Endpoints 
 Use the following endpoints:
-  - **POST /:userId/lists** : Create a new to-do list.
-  - **DELETE /:userId/:listId** : Delete a to-do list by its ID.
-  - **POST /:userId/:listId/items** : Insert a new item into a to-do list. 
-  - **DELETE /:userId/:listId/:itemId** : Delete an item from a to-do list by its ID.
-  - **PUT /:userId/:listId/item/:itemId** : Update the completion status of an item.
-  - **PUT /:userId/list/:listId/reminder** : Add a reminder to a to-do list.
+  - **POST /users/:userId/create-lists** : Create a new to-do list.
+  - **DELETE /users/:userId/lists/:listId/delete-lists** : Delete a to-do list by its ID.
+  - **POST /users/:userId/lists/:listId/insert-items** : Insert a new item into a to-do list. 
+  - **DELETE /users/:userId/lists/:listId/items/:itemId/delete-items** : Delete an item from a to-do list by its ID.
+  - **PUT /users/:userId/lists/:listId/items/:itemId/update-item-status** : Update the completion status of an item.
+  - **PUT /users/:userId/lists/:listId/items/:itemId/add-list-reminder** : Add a reminder to a to-do list.
