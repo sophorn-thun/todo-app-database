@@ -27,9 +27,11 @@ $npm install dotenv
   
 ```
 4. Start runing:         
-                         ```
-                         &npm start
-                         ```
+
+```
+&npm start
+
+```
 
 ## API Endpoints 
 Use the following endpoints:
