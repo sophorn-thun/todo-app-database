@@ -17,7 +17,7 @@ $npm install express
 $npm install dotenv
 
 ```
-3. Setup database: import todo.app.sql and update .env file with your database credentials:
+3. Setup database: import todo_app.sql and update .env file with your database credentials:
 ```
 
   - MYSQL_HOST= your-database-host
@@ -26,12 +26,8 @@ $npm install dotenv
   - MYSQL_DATABASE= your-database-name
   
 ```
-4. Start runing:         
+4. Start runing on VS Code:         node server.js
 
-```
-&npm start
-
-```
 
 ## API Endpoints 
 Use the following endpoints:
