@@ -16,7 +16,7 @@ async function getConnection() {
       user: process.env.MYSQL_USER,
       password: process.env.MYSQL_PASSWORD,
       database: process.env.MYSQL_DATABASE,
-      connectionLimit: 20,
+
     });
     console.log('Connection pool created');
   }
@@ -30,14 +30,57 @@ async function getConnection() {
   }
 }
 
+// Function to check if user exists
+async function checkUser(userId) {
+  try {
+    const connection = await getConnection();
+    const [result] = await connection.execute('SELECT COUNT(*) as count FROM User WHERE id = ?', [userId]);
+    const count = result[0].count;
+    return count > 0;
+  } catch (error) {
+    console.error('Failed to check if user exists: ', error);
+    throw error;
+  }
+}
+
+// Function to check if the list exists
+async function checkListExists(userId, listId) {
+  try {
+    const connection = await getConnection();
+    const [result] = await connection.execute('SELECT COUNT(*) as count FROM todo_list WHERE user_id = ? AND list_id = ?', [userId, listId]);
+    const count = result[0].count;
+    return count > 0;
+  } catch (error) {
+    console.error('Failed to check if the list exists:', error);
+    throw error;
+  }
+}
+
+// Function to check if the item exists
+async function checkItemExists(userId, listId, itemId) {
+  try {
+    const connection = await getConnection();
+    const [result] = await connection.execute('SELECT COUNT(*) as count FROM todo_item WHERE user_id = ? AND list_id = ? AND todo_id = ?', [userId, listId, itemId]);
+    const count = result[0].count;
+    return count > 0;
+  } catch (error) {
+    console.error('Failed to check if the item exists:', error);
+    throw error;
+  }
+}
+
 
 // Create new todo_list
-app.post('/:userId/lists', async (req, res) => {
+app.post('/users/:userId/create-lists', async (req, res) => {
   try {
     const { userId } = req.params;
     const { listName, completionStatus, dueDate } = req.body;
     const connection = await getConnection();
-    
+    const userExists = await checkUser(userId);
+    if (!userExists) {
+      return res.status(404).send('User not found');
+    }
+
     const [result] = await connection.execute('INSERT INTO todo_list (user_id, list_name, completion_status, due_date) VALUES (?, ?, ?, ?)', [userId, listName, completionStatus, dueDate]);
     const newListId = result.insertId;
     
@@ -49,12 +92,20 @@ app.post('/:userId/lists', async (req, res) => {
   }
 });
 
-
 // Delete todo_list
-app.delete('/:userId/:listId', async (req, res) => {
+app.delete('/users/:userId/lists/:listId/delete-lists', async (req, res) => {
   try {
     const { userId, listId } = req.params;
     const connection = await getConnection();
+    const userExists = await checkUser(userId);
+    if (!userExists) {
+      return res.status(404).send('User not found');
+    }
+
+    const listExists = await checkListExists(userId, listId);
+    if (!listExists) {
+      return res.status(404).send('List not found')
+    }
 
     const [result] = await connection.execute('DELETE FROM todo_list WHERE user_id = ? AND list_id = ?', [userId, listId]);
     console.log('To-do list deleted successfully');
@@ -66,12 +117,16 @@ app.delete('/:userId/:listId', async (req, res) => {
 });
 
 // Insert todo_item
-app.post('/:userId/:listId/items', async (req, res) => {
+app.post('/users/:userId/lists/:listId/insert-items', async (req, res) => {
   try {
     const { userId, listId } = req.params;
     const { completionStatus, dueDate, description } = req.body;
     const connection = await getConnection();
-    
+    const userExists = await checkUser(userId);
+    if (!userExists) {
+      return res.status(404).send('User not found');
+    }
+
     const [result] = await connection.execute('INSERT INTO todo_item (user_id, list_id, completion_status, due_date, description) VALUES (?, ?, ?, ?, ?)', [userId, listId, completionStatus, dueDate, description]);
     const newItemId = result.insertId;
     console.log('New todo_item created successfully');
@@ -84,11 +139,20 @@ app.post('/:userId/:listId/items', async (req, res) => {
 
 
 // Delete todo_item
-app.delete('/:userId/:listId/:itemId', async (req, res) => {
+app.delete('/users/:userId/lists/:listId/items/:itemId/delete-items', async (req, res) => {
   try {
     const { userId, listId, itemId } = req.params;
     const connection = await getConnection();
-    
+    const userExists = await checkUser(userId);
+    if (!userExists) {
+      return res.status(404).send('User not found');
+    }
+
+    const itemExists = await checkItemExists(userId, listId, itemId) 
+    if (!itemExists) {
+      return res.status(404).send('Item not found');
+    }
+
     const [result] = await connection.execute('DELETE FROM todo_item WHERE user_id = ? AND list_id = ? AND todo_id = ?', [userId, listId, itemId]);
     console.log('Todo_item deleted successfully');
     res.status(200).json({ result });
@@ -99,14 +163,17 @@ app.delete('/:userId/:listId/:itemId', async (req, res) => {
 });
 
 // Update item status
-app.put('/:userId/:listId/item/:itemId', async (req, res) => {
+app.put('/users/:userId/lists/:listId/items/:itemId/update-item-status', async (req, res) => {
   try {
     const { userId, listId, itemId } = req.params;
     const { completionStatus } = req.body;
     const connection = await getConnection();
-    const updatedCompletionStatus = completionStatus || null;
-    
-    const [result] = await connection.execute('UPDATE todo_item SET completion_status = ? WHERE user_id = ? AND list_id = ? AND todo_id = ?', [updatedCompletionStatus, userId, listId, itemId]);
+    const userExists = await checkUser(userId);
+    if (!userExists) {
+      return res.status(404).send('User not found');
+    }
+
+    const [result] = await connection.execute('UPDATE todo_item SET completion_status = ? WHERE user_id = ? AND list_id = ? AND todo_id = ?', [completionStatus, userId, listId, itemId]);
     console.log('Item status updated successfully');
     res.status(200).json({ result });
   } catch (error) {
@@ -116,14 +183,17 @@ app.put('/:userId/:listId/item/:itemId', async (req, res) => {
 });
 
 // Add reminder to the list
-app.put('/:userId/list/:listId/reminder', async (req, res) => {
+app.put('/users/:userId/lists/:listId/items/:itemId/add-list-reminder', async (req, res) => {
   try {
     const { userId, listId } = req.params;
     const { dueDate } = req.body;
     const connection = await getConnection();
-    const updatedDueDate = dueDate || null;
+    const userExists = await checkUser(userId);
+    if (!userExists) {
+      return res.status(404).send('User not found');
+    }
     
-    const [result] = await connection.execute('UPDATE todo_list SET due_date = ? WHERE user_id = ? AND list_id = ?', [updatedDueDate, userId, listId]);
+    const [result] = await connection.execute('UPDATE todo_list SET due_date = ? WHERE user_id = ? AND list_id = ?', [dueDate, userId, listId]);
     console.log('Reminder added to the list successfully');
     res.status(200).json({ result });
   } catch (error) {
@@ -131,6 +201,7 @@ app.put('/:userId/list/:listId/reminder', async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
+
 
 // Invalid routes
 app.use((req, res) => {
