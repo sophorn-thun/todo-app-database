@@ -12,7 +12,7 @@ $git clone git@github.com:sophorn-thun/todo-app-database.git
 2. In terminal, install: 
                         
 ```
-$npm install mysql2
+$npm install mysql2/promises
 $npm install express
 $npm install dotenv
 
